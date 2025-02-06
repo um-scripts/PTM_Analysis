@@ -12,10 +12,8 @@ kd_scale = {
 }
 
 def calculate_hydrophobicity(sequence, window_size=7):
-    """Calculate hydrophobicity scores using Kyte-Doolittle scale"""
     fixed_length = 41
     
-    # Pad or truncate the sequence to fixed length
     if len(sequence) > fixed_length:
         sequence = sequence[:fixed_length]
     else:
@@ -23,11 +21,9 @@ def calculate_hydrophobicity(sequence, window_size=7):
     
     if window_size > len(sequence):
         window_size = len(sequence)
-        
-    # Convert sequence to hydrophobicity values
+
     hydro_values = [kd_scale.get(aa, 0) for aa in sequence]
     
-    # Calculate moving average
     scores = []
     half_window = window_size // 2
     
@@ -40,22 +36,17 @@ def calculate_hydrophobicity(sequence, window_size=7):
     return scores
 
 def analyze_fasta_file(input_file, window_size=7):
-    """Analyze hydrophobicity for sequences in a FASTA file"""
-    # Read sequences from file
     all_hydro_scores = []
     all_seq_ids = []
     
     for record in SeqIO.parse(input_file, "fasta"):
-        # Get sequence ID from header
         seq_id = record.id
         
-        # Calculate hydrophobicity scores
         hydrophobicity_scores = calculate_hydrophobicity(str(record.seq), window_size)
         
         all_hydro_scores.append(hydrophobicity_scores)
         all_seq_ids.append(seq_id)
         
-        # Plot the position-wise hydrophobicity/hydrophilicity
         plt.figure(figsize=(12, 4))
         plt.plot(hydrophobicity_scores)
         plt.axhline(y=0, color='r', linestyle='-')
@@ -65,16 +56,13 @@ def analyze_fasta_file(input_file, window_size=7):
         plt.savefig(f"{seq_id}_hydrophobicity_plot.png")
         plt.close()
     
-    # Write results to CSV
     csv_filename = "hydrophobicity_scores.csv"
     with open(csv_filename, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
         
-        # Write header
         header = ['Sequence_ID'] + [f'Pos_{i+1}_Score' for i in range(41)]
         writer.writerow(header)
         
-        # Write data for each sequence
         for seq_id, scores in zip(all_seq_ids, all_hydro_scores):
             row = [seq_id] + [f'{score:.3f}' for score in scores]
             writer.writerow(row)
