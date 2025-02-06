@@ -4,7 +4,6 @@ from Bio import SeqIO
 import matplotlib.pyplot as plt
 import os
 
-# Grantham's polarity scale
 grantham_polarity = {
     'A': 8.1, 'R': 10.5, 'N': 11.6, 'D': 13.0, 'C': 5.5, 
     'Q': 10.5, 'E': 12.3, 'G': 9.0, 'H': 10.4, 'I': 5.2, 
@@ -13,7 +12,6 @@ grantham_polarity = {
 }
 
 def calculate_polarity_scores(sequence, window_size=7):
-    """Calculate polarity scores with moving window"""
     if window_size > len(sequence):
         window_size = len(sequence)
     
@@ -31,50 +29,31 @@ def calculate_polarity_scores(sequence, window_size=7):
     return scores
 
 def analyze_fasta(input_file, output_dir='polarity_results'):
-    """Comprehensive analysis of FASTA sequences"""
-    # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
     
-    # List to store all sequence data
     all_sequence_data = []
     
-    # Process each sequence in the FASTA file
     for record in SeqIO.parse(input_file, "fasta"):
-        # Calculate polarity scores
         polarity_scores = calculate_polarity_scores(str(record.seq))
-        
-        # Prepare row with sequence identifier and polarity scores
         row_data = [record.id] + polarity_scores
         all_sequence_data.append(row_data)
-        
-        # Generate polarity plot
         plt.figure(figsize=(12, 4))
         plt.plot(polarity_scores)
-        
-        # Calculate and plot reference lines
         avg_polarity = sum(polarity_scores) / len(polarity_scores)
         plt.axhline(y=avg_polarity, color='r', linestyle='-', label=f'Average Polarity ({avg_polarity:.2f})')
         plt.axhline(y=10.0, color='g', linestyle='--', label='High Polarity Threshold')
         plt.axhline(y=6.0, color='b', linestyle='--', label='Low Polarity Threshold')
-        
         plt.title(f"Polarity Profile (Grantham) for Sequence: {record.id}")
         plt.xlabel("Position")
         plt.ylabel("Polarity Score")
         plt.legend()
         plt.grid(True, alpha=0.3)
-        
-        # Save plot
         plot_filename = os.path.join(output_dir, f"{record.id}_polarity_plot.png")
         plt.savefig(plot_filename)
         plt.close()
     
-    # Create column names
     column_names = ['Sequence_ID'] + [f'Pos_{i+1}_Score' for i in range(len(polarity_scores))]
-    
-    # Create DataFrame
     df = pd.DataFrame(all_sequence_data, columns=column_names)
-    
-    # Save CSV
     csv_filename = os.path.join(output_dir, 'polarity_scores.csv')
     df.to_csv(csv_filename, index=False)
     
